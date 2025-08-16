@@ -1,5 +1,8 @@
 package com.pyscala4j.transpiler.ir;
 
+import com.pyscala4j.transpiler.ir.expr.IRExpr;
+import com.pyscala4j.transpiler.ir.expr.IRLiteral;
+import com.pyscala4j.transpiler.ir.expr.LiteralType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
