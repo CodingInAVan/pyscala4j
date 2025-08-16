@@ -2,6 +2,7 @@ package com.pyscala4j.transpiler.ir;
 
 
 import com.pyscala4j.transpiler.ir.exception.IRConvertException;
+import com.pyscala4j.transpiler.ir.expr.*;
 
 public class IRGenerator {
 	public static IRExpr unwrapString(String text) {
@@ -11,138 +12,93 @@ public class IRGenerator {
 	public static IRExpr convertTextToExpr(String text) throws IRConvertException {
 		String trimmed = text.trim();
 
-		if (text.equals("True")) {
-			return new IRLiteral("true", LiteralType.Boolean);
-		}
-
-		if (text.equals("False")) {
-			return new IRLiteral("false", LiteralType.Boolean);
-		}
-
-		if (text.equals("None")) {
-			return new IRLiteral("null", LiteralType.Null);
-		}
-
-		if (text.matches("\\d+")) {
-			return new IRLiteral(text, LiteralType.Integer);
-		}
-
-		if (text.matches("\\d+\\.\\d+")) {
-			return new IRLiteral(text, LiteralType.Float);
-		}
-
-		if (text.startsWith("\"") && text.endsWith("\"")) {
-			return unwrapString(text);
-		}
-
-		if (text.startsWith("'") && text.endsWith("'")) {
-			return unwrapString(text);
-		}
-
-		if (text.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
-			return new IRIdentifier(text);
-		}
-
-		if (trimmed.contains(" and ")) {
-			String[] parts = trimmed.split(" and ");
-			return new IRBinaryOp(
-				convertTextToExpr(parts[0]), BinaryOp.AND, convertTextToExpr(parts[1])
-			);
-		}
-
+		// 1. Logical OR
 		if (trimmed.contains(" or ")) {
-			String[] parts = trimmed.split(" or ");
-			return new IRBinaryOp(
-				convertTextToExpr(parts[0]), BinaryOp.OR, convertTextToExpr(parts[1])
-			);
+			String[] parts = trimmed.split(" or ", 2);
+			return IRExpr.binaryOp(convertTextToExpr(parts[0]), BinaryOp.OR, convertTextToExpr(parts[1]));
 		}
-
+		// 2. Logical AND
+		if (trimmed.contains(" and ")) {
+			String[] parts = trimmed.split(" and ", 2);
+			return IRExpr.binaryOp(convertTextToExpr(parts[0]), BinaryOp.AND, convertTextToExpr(parts[1]));
+		}
+		// 3. Comparisons (all have similar precedence)
 		if (trimmed.contains("==")) {
-			String[] parts = trimmed.split("==");
-			return new IRBinaryOp(
-				convertTextToExpr(parts[0]), BinaryOp.EQ, convertTextToExpr(parts[1])
-			);
+			String[] parts = trimmed.split("==", 2);
+			return IRExpr.binaryOp(convertTextToExpr(parts[0]), BinaryOp.EQ, convertTextToExpr(parts[1]));
 		}
-
 		if (trimmed.contains("!=")) {
 			String[] parts = trimmed.split("!=", 2);
-			return new IRBinaryOp(
-				convertTextToExpr(parts[0]), BinaryOp.NE, convertTextToExpr(parts[1])
-			);
+			return IRExpr.binaryOp(convertTextToExpr(parts[0]), BinaryOp.NE, convertTextToExpr(parts[1]));
 		}
-
 		if (trimmed.contains(">=")) {
-			String[] parts = trimmed.split(">", 2);
-			return new IRBinaryOp(
-				convertTextToExpr(parts[0]), BinaryOp.GE, convertTextToExpr(parts[1])
-			);
+			String[] parts = trimmed.split(">=", 2);
+			return IRExpr.binaryOp(convertTextToExpr(parts[0]), BinaryOp.GE, convertTextToExpr(parts[1]));
 		}
-
 		if (trimmed.contains("<=")) {
-			String[] parts = trimmed.split("<", 2);
-			return new IRBinaryOp(
-				convertTextToExpr(parts[0]), BinaryOp.LE, convertTextToExpr(parts[1])
-			);
+			String[] parts = trimmed.split("<=", 2);
+			return IRExpr.binaryOp(convertTextToExpr(parts[0]), BinaryOp.LE, convertTextToExpr(parts[1]));
 		}
-
 		if (trimmed.contains(">")) {
 			String[] parts = trimmed.split(">", 2);
-			return new IRBinaryOp(
-				convertTextToExpr(parts[0]), BinaryOp.GT, convertTextToExpr(parts[1])
-			);
+			return IRExpr.binaryOp(convertTextToExpr(parts[0]), BinaryOp.GT, convertTextToExpr(parts[1]));
 		}
-
 		if (trimmed.contains("<")) {
 			String[] parts = trimmed.split("<", 2);
-			return new IRBinaryOp(
-				convertTextToExpr(parts[0]), BinaryOp.LT, convertTextToExpr(parts[1])
-			);
+			return IRExpr.binaryOp(convertTextToExpr(parts[0]), BinaryOp.LT, convertTextToExpr(parts[1]));
 		}
-
-		if (trimmed.contains("=")) {
-			String[] parts = trimmed.split("=", 2);
-			return new IRBinaryOp(
-				convertTextToExpr(parts[0]), BinaryOp.EQ, convertTextToExpr(parts[1])
-			);
-		}
-
+		// 4. Addition/Subtraction
 		if (trimmed.contains("+")) {
 			String[] parts = trimmed.split("\\+", 2);
-			return new IRBinaryOp(
-				convertTextToExpr(parts[0]), BinaryOp.ADD, convertTextToExpr(parts[1])
-			);
+			return IRExpr.binaryOp(convertTextToExpr(parts[0]), BinaryOp.ADD, convertTextToExpr(parts[1]));
 		}
-
 		if (trimmed.contains("-")) {
 			String[] parts = trimmed.split("-", 2);
-			return new IRBinaryOp(
-				convertTextToExpr(parts[0]), BinaryOp.SUB, convertTextToExpr(parts[1])
-			);
+			return IRExpr.binaryOp(convertTextToExpr(parts[0]), BinaryOp.SUB, convertTextToExpr(parts[1]));
 		}
-
+		// 5. Multiplication/Division/Modulus
 		if (trimmed.contains("*")) {
 			String[] parts = trimmed.split("\\*", 2);
-			return new IRBinaryOp(
-				convertTextToExpr(parts[0]), BinaryOp.MUL, convertTextToExpr(parts[1])
-			);
+			return IRExpr.binaryOp(convertTextToExpr(parts[0]), BinaryOp.MUL, convertTextToExpr(parts[1]));
 		}
-
 		if (trimmed.contains("/")) {
 			String[] parts = trimmed.split("/", 2);
-			return new IRBinaryOp(
-				convertTextToExpr(parts[0]), BinaryOp.DIV, convertTextToExpr(parts[1])
-			);
+			return IRExpr.binaryOp(convertTextToExpr(parts[0]), BinaryOp.DIV, convertTextToExpr(parts[1]));
 		}
-
 		if (trimmed.contains("%")) {
 			String[] parts = trimmed.split("%", 2);
-			return new IRBinaryOp(
-				convertTextToExpr(parts[0]), BinaryOp.MOD, convertTextToExpr(parts[1])
-			);
+			return IRExpr.binaryOp(convertTextToExpr(parts[0]), BinaryOp.MOD, convertTextToExpr(parts[1]));
 		}
 
-		if (trimmed.contains("not ")) {
-			return new IRUnaryOp(UnaryOp.Not, convertTextToExpr(trimmed.substring(4)));
+		// 6. Unary Not
+		if (trimmed.startsWith("not ")) {
+			return IRExpr.unaryOp(UnaryOp.Not, convertTextToExpr(trimmed.substring(4)));
+		}
+
+		// 7. Literals and Identifiers (leaf nodes)
+		if (trimmed.equals("True")) {
+			return IRExpr.literal("true", LiteralType.Boolean);
+		}
+		if (trimmed.equals("False")) {
+			return IRExpr.literal("false", LiteralType.Boolean);
+		}
+		if (trimmed.equals("None")) {
+			return IRExpr.literal("null", LiteralType.Null);
+		}
+		if (trimmed.matches("[+-]?\\d+\\.\\d+")) {
+			return IRExpr.literal(trimmed, LiteralType.Float);
+		}
+		if (trimmed.matches("[+-]?\\d+")) {
+			return IRExpr.literal(trimmed, LiteralType.Integer);
+		}
+		if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
+			return unwrapString(trimmed);
+		}
+		if (trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
+			return unwrapString(trimmed);
+		}
+		if (trimmed.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+			return IRExpr.identifier(trimmed);
 		}
 
 		throw new IRConvertException("Failed to convert [" + trimmed + "] to IRExpr");

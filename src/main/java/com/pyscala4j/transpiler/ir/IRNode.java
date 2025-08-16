@@ -1,5 +1,8 @@
 package com.pyscala4j.transpiler.ir;
 
+import com.pyscala4j.transpiler.ir.expr.BinaryOp;
+import com.pyscala4j.transpiler.ir.expr.IRExpr;
+
 import java.util.Optional;
 
 public sealed interface IRNode
