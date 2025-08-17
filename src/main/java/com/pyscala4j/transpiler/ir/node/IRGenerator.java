@@ -1,4 +1,4 @@
-package com.pyscala4j.transpiler.ir;
+package com.pyscala4j.transpiler.ir.node;
 
 
 import com.pyscala4j.transpiler.ir.exception.IRConvertException;

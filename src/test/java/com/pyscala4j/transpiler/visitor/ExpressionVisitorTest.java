@@ -1,17 +1,14 @@
 package com.pyscala4j.transpiler.visitor;
 
-import com.pyscala4j.antlr.generated.Python3Lexer;
 import com.pyscala4j.antlr.generated.Python3Parser;
-import com.pyscala4j.transpiler.ir.expr.LiteralType;
 import com.pyscala4j.transpiler.ir.expr.*;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static com.pyscala4j.transpiler.visitor.PythonVisitorTestHelper.createParser;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ExpressionVisitorTest {
@@ -29,10 +26,16 @@ public class ExpressionVisitorTest {
 	 * @return The ANTLR context object for the atom_expr rule.
 	 */
 	private Python3Parser.Atom_exprContext parseAtomExpr(String pythonCode) {
-		Python3Lexer lexer = new Python3Lexer(CharStreams.fromString(pythonCode));
-		CommonTokenStream tokens = new CommonTokenStream(lexer);
-		Python3Parser parser = new Python3Parser(tokens);
+		Python3Parser parser = createParser(pythonCode);
 		return parser.atom_expr();
+	}
+
+	/**
+	 * Helper function to take a string and return the ANTLR parse tree context for 'expr'
+	 */
+	private Python3Parser.ExprContext parseExpression(String pythonCode) {
+		Python3Parser parser = createParser(pythonCode);
+		return parser.expr();
 	}
 
 	@Test
@@ -199,6 +202,39 @@ public class ExpressionVisitorTest {
 							assertThat(unaryOp.expr())
 								.isEqualTo(expected);
 						}));
+			});
+	}
+
+	@Test
+	void testAdditionExpression() {
+		String code = "5 + 3";
+
+		Python3Parser.ExprContext context = parseExpression(code);
+		IRExpr result = expressionVisitor.visit(context);
+
+		assertThat(result)
+			.isInstanceOf(IRBinaryOp.class)
+			.asInstanceOf(InstanceOfAssertFactories.type(IRBinaryOp.class))
+			.satisfies(op -> {
+				assertThat(op.op()).isEqualTo(BinaryOp.ADD);
+				assertThat(op.left()).isEqualTo(new IRLiteral("5", LiteralType.Integer));
+				assertThat(op.right()).isEqualTo(new IRLiteral("3", LiteralType.Integer));
+			});
+	}
+
+	@Test
+	void testSubtractionExpression() {
+		String code = "10 - 4";
+
+		Python3Parser.ExprContext context = parseExpression(code);
+		IRExpr result = expressionVisitor.visit(context);
+		assertThat(result)
+			.isInstanceOf(IRBinaryOp.class)
+			.asInstanceOf(InstanceOfAssertFactories.type(IRBinaryOp.class))
+			.satisfies(op -> {
+				assertThat(op.op()).isEqualTo(BinaryOp.SUB);
+				assertThat(op.left()).isEqualTo(new IRLiteral("10", LiteralType.Integer));
+				assertThat(op.right()).isEqualTo(new IRLiteral("4", LiteralType.Integer));
 			});
 	}
 }

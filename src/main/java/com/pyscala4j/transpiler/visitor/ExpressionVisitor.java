@@ -4,24 +4,26 @@ import com.pyscala4j.antlr.generated.Python3Parser;
 import com.pyscala4j.antlr.generated.Python3ParserBaseVisitor;
 import com.pyscala4j.transpiler.ir.expr.*;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.tree.TerminalNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class ExpressionVisitor extends Python3ParserBaseVisitor<IRExpr> {
+	private static final Logger logger = LoggerFactory.getLogger(ExpressionVisitor.class);
 
 	@Override
 	public IRExpr visitExpr(Python3Parser.ExprContext ctx) {
+		logger.debug("Visiting expr: {}", ctx.getText());
 		if(ctx.expr().size() == 2) {
 			IRExpr left = visit(ctx.expr(0));
 			IRExpr right = visit(ctx.expr(1));
-
-			if (ctx.ADD() != null) {
+			if (!ctx.ADD().isEmpty()) {
 				return new IRBinaryOp(left, BinaryOp.ADD, right);
 			}
-			if (ctx.MINUS() != null) {
+			if (!ctx.MINUS().isEmpty()) {
 				return new IRBinaryOp(left, BinaryOp.SUB, right);
 			}
 		}
