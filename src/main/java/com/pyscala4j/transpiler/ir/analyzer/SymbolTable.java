@@ -14,6 +14,10 @@ public class SymbolTable {
 		scopes.push(new Scope(type));
 	}
 
+	public Scope getCurrentScope() {
+		return scopes.peek();
+	}
+
 	public void exitScope() {
 		if (!scopes.isEmpty()) {
 			scopes.pop();
